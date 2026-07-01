@@ -17,6 +17,7 @@ export interface LiveEvent {
   sport?: string;
   channels?: string[];
   stream_url?: string;
+  players?: { [key: string]: string };
 }
 
 export interface MediaItem {

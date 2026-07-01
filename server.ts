@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
+import fs from "fs";
 
 // Deshabilitar la verificación SSL estricta para emular CURLOPT_SSL_VERIFYPEER => false
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -15,7 +16,7 @@ async function startServer() {
   app.get("/api/schedule", async (req, res) => {
     try {
       console.log("Consultando API de programación externa...");
-      const targetUrl = "https://ofutbol.jdoxx.com/api/shedule/YeBraQN6NLONadMf9W5NHYF4g8Dxdl";
+      const targetUrl = "https://ofutbol.jdoxx.com/api/shedule/YeBraQN6NLONadMf9W5NHYF4g8Dxdl?t=" + Date.now();
       
       // Obtener origin y referer de la petición del cliente de manera dinámica
       const clientOrigin = req.headers.origin || "";
@@ -37,20 +38,36 @@ async function startServer() {
 
       console.log(`Cabeceras de Origen forwarded - Origin: ${headers["Origin"]}, Referer: ${headers["Referer"]}`);
 
-      const response = await fetch(targetUrl, {
-        method: "GET",
-        headers
-      });
+      let data: any = null;
+      try {
+        const response = await fetch(targetUrl, {
+          method: "GET",
+          headers
+        });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Error HTTP: ${response.status}`);
+        }
+
+        data = await response.json();
+      } catch (fetchErr: any) {
+        throw new Error(`Error de red al consultar la API: ${fetchErr.message || fetchErr}`);
       }
 
-      const data = await response.json();
+      // Detectar si la respuesta de la API es un error real o si no trae datos válidos
+      console.log("API Keys received in server.ts:", data ? Object.keys(data) : "null");
+      console.log("API RAW DATA received in server.ts:", JSON.stringify(data));
+      const isApiError = data && data.code !== undefined && data.code !== 200 && data.code !== "200";
+      const hasValidData = data && (
+        Array.isArray(data) || 
+        data.channels || data.canales || 
+        data.events || data.eventos || 
+        data.shedule || data.schedule || 
+        data.tv_list || data.agenda
+      );
 
-      // Detectar si la respuesta de la API es un error configurado o no trae la estructura requerida
-      if (data && (data.code !== undefined || (!data.channels && !data.canales && !data.events && !data.eventos))) {
-        const errorMsg = data.text || "La API externa no retornó datos o requiere configuración";
+      if (!data || isApiError || !hasValidData) {
+        const errorMsg = data?.text || data?.message || "La API externa no retornó datos o requiere configuración";
         console.warn(`La API externa retornó un estado de error o incompleto: ${JSON.stringify(data)}`);
         throw new Error(errorMsg);
       }

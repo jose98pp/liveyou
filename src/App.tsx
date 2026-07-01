@@ -138,18 +138,34 @@ export default function App() {
 
     // 2. Parse Events (matches, sports programs)
     let parsedEvents: LiveEvent[] = [];
-    const rawEvents = apiData.events || apiData.eventos || apiData.schedule || apiData.agenda || [];
+    const rawEvents = apiData.events || apiData.eventos || apiData.schedule || apiData.shedule || apiData.agenda || [];
     if (Array.isArray(rawEvents)) {
-      parsedEvents = rawEvents.map((ev: any, idx: number) => ({
-        id: ev.id || ev.event_id || `ev-${idx}`,
-        title: ev.title || ev.name || ev.titulo || "Evento Deportivo",
-        tournament: ev.tournament || ev.league || ev.torneo || "",
-        time: ev.time || ev.hora || "",
-        status: ev.status || ev.estado || "PROGRAMADO",
-        sport: ev.sport || ev.deporte || "Fútbol",
-        channels: Array.isArray(ev.channels) ? ev.channels : (ev.channels ? [ev.channels] : []),
-        stream_url: ev.stream_url || ev.stream || ev.url || ""
-      }));
+      parsedEvents = rawEvents.map((ev: any, idx: number) => {
+        // Extraer hora si está disponible en la descripción
+        let extractedTime = ev.time || ev.hora || "";
+        if (!extractedTime && ev.description) {
+          const match = ev.description.match(/a las\s+(\d{1,2}:\d{2})/i);
+          if (match) {
+            extractedTime = match[1];
+          }
+        }
+        
+        // Estructura de players (si play tiene player-1, player-2, etc.)
+        const players = ev.play || ev.players || null;
+        const defaultStream = ev.stream_url || ev.stream || ev.url || (players ? players["player-1"] || players["player-2"] : "");
+
+        return {
+          id: ev.id || ev.event_id || `ev-${idx}`,
+          title: ev.title || ev.name || ev.titulo || "Evento Deportivo",
+          tournament: ev.tournament || ev.league || ev.torneo || ev.type || "",
+          time: extractedTime || "Por Definir",
+          status: ev.status || ev.estado || (players ? "LIVE" : "PROGRAMADO"),
+          sport: ev.sport || ev.deporte || "Fútbol",
+          channels: Array.isArray(ev.channels) ? ev.channels : (ev.channels ? [ev.channels] : []),
+          stream_url: defaultStream,
+          players: players
+        };
+      });
     }
 
     // 3. Parse Movies and Series

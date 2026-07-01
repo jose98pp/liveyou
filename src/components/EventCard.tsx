@@ -131,7 +131,24 @@ export default function EventCard({ event, onPlay, isFavorite, onToggleFavorite 
         </div>
 
         {/* Action Button */}
-        {isLive && event.stream_url ? (
+        {isLive && event.players && Object.keys(event.players).length > 0 ? (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[10px] text-slate-500 font-semibold mb-0.5">Opciones de reproducción:</span>
+            <div className="grid grid-cols-2 gap-2">
+              {Object.entries(event.players).map(([key, url]) => (
+                <button
+                  key={key}
+                  onClick={() => onPlay(url, `${event.title} (${key.replace('-', ' ')})`)}
+                  className="flex items-center justify-center gap-1.5 bg-gradient-to-r from-zinc-800 to-zinc-900 hover:from-red-500/20 hover:to-rose-600/20 hover:border-rose-500/30 border border-white/[0.06] text-white hover:text-rose-300 font-semibold py-1.5 px-3 rounded-xl text-xs transition-all cursor-pointer"
+                  id={`watch-event-btn-${event.id}-${key}`}
+                >
+                  <Play className="w-3 h-3 fill-current" />
+                  <span className="capitalize">{key.replace("-", " ")}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : isLive && event.stream_url ? (
           <button
             onClick={() => onPlay(event.stream_url!, event.title)}
             className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-semibold py-2 px-4 rounded-xl text-sm transition-all shadow-md shadow-rose-950/20 cursor-pointer"

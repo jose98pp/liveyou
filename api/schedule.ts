@@ -17,7 +17,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const targetUrl = "https://ofutbol.jdoxx.com/api/shedule/YeBraQN6NLONadMf9W5NHYF4g8Dxdl";
+    const targetUrl = "https://ofutbol.jdoxx.com/api/shedule/YeBraQN6NLONadMf9W5NHYF4g8Dxdl?t=" + Date.now();
     
     // Obtener origin y referer de la petición del cliente de manera dinámica
     const clientOrigin = req.headers.origin || "";
@@ -50,9 +50,18 @@ export default async function handler(req: any, res: any) {
 
     const data = await response.json();
 
-    // Detectar si la respuesta de la API es un error configurado o no trae la estructura requerida
-    if (data && (data.code !== undefined || (!data.channels && !data.canales && !data.events && !data.eventos))) {
-      const errorMsg = data.text || "La API externa no retornó datos o requiere configuración";
+    // Detectar si la respuesta de la API es un error real o si no trae datos válidos
+    const isApiError = data && data.code !== undefined && data.code !== 200 && data.code !== "200";
+    const hasValidData = data && (
+      Array.isArray(data) || 
+      data.channels || data.canales || 
+      data.events || data.eventos || 
+      data.shedule || data.schedule || 
+      data.tv_list || data.agenda
+    );
+
+    if (!data || isApiError || !hasValidData) {
+      const errorMsg = data?.text || data?.message || "La API externa no retornó datos o requiere configuración";
       console.warn(`[Vercel Serverless] API retornó error o incompleto: ${JSON.stringify(data)}`);
       throw new Error(errorMsg);
     }
