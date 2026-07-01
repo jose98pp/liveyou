@@ -29,24 +29,13 @@ export default async function handler(req: any, res: any) {
       "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     };
 
-    // Determinar el protocolo dinámicamente
-    const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
-    const protocol = isHttps ? "https" : "http";
-    const host = req.headers.host || "localhost:3000";
+    // Forzar siempre el dominio de origen autorizado registrado en la API (https://liveyou-five.vercel.app)
+    // para garantizar que funcione tanto en local, en la vista previa de AI Studio, como en producción.
+    const finalOrigin = "https://liveyou-five.vercel.app";
+    const finalReferer = "https://liveyou-five.vercel.app/";
 
-    // Intentar usar origin del cliente, o en su defecto construirlo basándose en el host
-    if (clientOrigin && clientOrigin !== "null" && clientOrigin !== "") {
-      headers["Origin"] = clientOrigin as string;
-    } else {
-      headers["Origin"] = `${protocol}://${host}`;
-    }
-
-    // Intentar usar referer del cliente, o en su defecto construirlo basándose en el host
-    if (clientReferer && clientReferer !== "") {
-      headers["Referer"] = clientReferer as string;
-    } else {
-      headers["Referer"] = `${protocol}://${host}/`;
-    }
+    headers["Origin"] = finalOrigin;
+    headers["Referer"] = finalReferer;
 
     console.log(`[Vercel Serverless] Forwarding Origin: ${headers["Origin"]}, Referer: ${headers["Referer"]}`);
 
