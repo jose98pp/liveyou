@@ -1,0 +1,6 @@
+{
+  "name": "TV & Events Guide",
+  "description": "Una guía interactiva y moderna de canales de TV, series, películas y eventos en vivo.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
