@@ -50,48 +50,108 @@ export default function EventCard({ event, onPlay, isFavorite, onToggleFavorite 
       <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl pointer-events-none" />
 
       <div>
-        {/* Card Header Info */}
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border backdrop-blur-sm ${getSportColor(event.sport)}`}>
-            {event.sport || "Evento"}
-          </span>
+        {event.image ? (
+          /* Premium Visual Header with Banner Image and Overlays */
+          <div className="relative h-40 w-full rounded-xl overflow-hidden mb-4 border border-white/[0.06] bg-zinc-950">
+            <img 
+              src={event.image} 
+              alt={event.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              referrerPolicy="no-referrer"
+            />
+            {/* Ambient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+            
+            {/* Overlays inside image */}
+            <div className="absolute top-2.5 left-2.5">
+              <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border backdrop-blur-md ${getSportColor(event.sport)}`}>
+                {event.sport || "Evento"}
+              </span>
+            </div>
 
-          <div className="flex items-center gap-1.5">
-            {isLive && (
-              <span className="flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse backdrop-blur-sm">
-                <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
-                En Vivo
-              </span>
-            )}
-            {isScheduled && (
-              <span className="bg-white/[0.04] text-slate-400 border border-white/[0.06] text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase backdrop-blur-sm">
-                Programado
-              </span>
-            )}
-            {isFinished && (
-              <span className="bg-white/[0.01] text-slate-500 border border-white/[0.02] text-[10px] font-medium px-2 py-0.5 rounded-full uppercase">
-                Finalizado
-              </span>
-            )}
+            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+              {isLive && (
+                <span className="flex items-center gap-1 bg-rose-500/80 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse backdrop-blur-md">
+                  <span className="w-1 h-1 bg-white rounded-full"></span>
+                  En Vivo
+                </span>
+              )}
+              {event.views !== undefined && (
+                <span className="flex items-center gap-1 bg-black/60 text-white/90 text-[9px] font-mono px-2 py-0.5 rounded-full border border-white/[0.1] backdrop-blur-md">
+                  <span>👁 {event.views}</span>
+                </span>
+              )}
+            </div>
 
-            {/* Favorite Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavorite();
-              }}
-              className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
-                isFavorite
-                  ? "bg-rose-500/15 border-rose-500/30 text-rose-400"
-                  : "bg-white/[0.03] border-white/[0.08] text-slate-400 hover:text-white hover:bg-white/[0.06]"
-              }`}
-              title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
-              id={`fav-btn-event-${event.id}`}
-            >
-              <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
-            </button>
+            {/* Time Badge on bottom left of image */}
+            <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 bg-black/60 text-slate-200 text-[10px] font-semibold px-2 py-0.5 rounded-md border border-white/[0.08] backdrop-blur-md">
+              <Clock className="w-3 h-3 text-rose-400" />
+              <span className="font-mono">{event.time || "Por definir"}</span>
+            </div>
+
+            {/* Favorite Button Overlay on bottom right */}
+            <div className="absolute bottom-2 right-2.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite();
+                }}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer backdrop-blur-md ${
+                  isFavorite
+                    ? "bg-rose-500/80 border-rose-500 text-white"
+                    : "bg-black/60 border-white/[0.1] text-slate-200 hover:text-white"
+                }`}
+                title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+                id={`fav-btn-event-img-${event.id}`}
+              >
+                <Heart className={`w-3 h-3 ${isFavorite ? "fill-current" : ""}`} />
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          /* Clean minimalist header if no image is available */
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <span className={`text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full border backdrop-blur-sm ${getSportColor(event.sport)}`}>
+              {event.sport || "Evento"}
+            </span>
+
+            <div className="flex items-center gap-1.5">
+              {isLive && (
+                <span className="flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse backdrop-blur-sm">
+                  <span className="w-1.5 h-1.5 bg-rose-500 rounded-full"></span>
+                  En Vivo
+                </span>
+              )}
+              {isScheduled && (
+                <span className="bg-white/[0.04] text-slate-400 border border-white/[0.06] text-[10px] font-semibold px-2 py-0.5 rounded-full uppercase backdrop-blur-sm">
+                  Programado
+                </span>
+              )}
+              {isFinished && (
+                <span className="bg-white/[0.01] text-slate-500 border border-white/[0.02] text-[10px] font-medium px-2 py-0.5 rounded-full uppercase">
+                  Finalizado
+                </span>
+              )}
+
+              {/* Favorite Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFavorite();
+                }}
+                className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                  isFavorite
+                    ? "bg-rose-500/15 border-rose-500/30 text-rose-400"
+                    : "bg-white/[0.03] border-white/[0.08] text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                }`}
+                title={isFavorite ? "Quitar de favoritos" : "Añadir a favoritos"}
+                id={`fav-btn-event-${event.id}`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${isFavorite ? "fill-current" : ""}`} />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Tournament Name */}
         {event.tournament && (
@@ -110,10 +170,12 @@ export default function EventCard({ event, onPlay, isFavorite, onToggleFavorite 
       <div>
         {/* Time and Broadcast Channels */}
         <div className="flex flex-col gap-2.5 pt-3 border-t border-white/[0.06] mb-4">
-          <div className="flex items-center gap-2 text-slate-400 text-xs">
-            <Clock className="w-3.5 h-3.5 text-slate-500" />
-            <span className="font-mono font-medium">{event.time || "Hora por definir"}</span>
-          </div>
+          {!event.image && (
+            <div className="flex items-center gap-2 text-slate-400 text-xs">
+              <Clock className="w-3.5 h-3.5 text-slate-500" />
+              <span className="font-mono font-medium">{event.time || "Hora por definir"}</span>
+            </div>
+          )}
 
           {event.channels && event.channels.length > 0 && (
             <div className="flex flex-wrap gap-1.5 items-center">

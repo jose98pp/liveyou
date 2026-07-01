@@ -18,6 +18,8 @@ export interface LiveEvent {
   channels?: string[];
   stream_url?: string;
   players?: { [key: string]: string };
+  image?: string;
+  views?: number;
 }
 
 export interface MediaItem {

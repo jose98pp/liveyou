@@ -136,42 +136,70 @@ export default function App() {
       }));
     }
 
+    // Helper function for parsing single event items uniformly
+    const parseEventItem = (item: any, idx: number): LiveEvent => {
+      // Extraer hora si está disponible en la descripción
+      let extractedTime = item.time || item.hora || "";
+      if (!extractedTime && item.description) {
+        const match = item.description.match(/a las\s+(\d{1,2}:\d{2})/i);
+        if (match) {
+          extractedTime = match[1];
+        }
+      }
+      
+      const players = item.play || item.players || null;
+      const defaultStream = item.stream_url || item.stream || item.url || (players ? players["player-1"] || players["player-2"] : "");
+      
+      // Mapeo inteligente de canales/pantallas de reproducción
+      let channelsList = Array.isArray(item.channels) ? item.channels : (item.channels ? [item.channels] : []);
+      if (channelsList.length === 0 && players) {
+        channelsList = Object.keys(players).map(k => k.replace("-", " "));
+      }
+
+      // Detalle de deporte inteligente
+      let detectedSport = item.sport || item.deporte || "";
+      if (!detectedSport) {
+        const countryCode = (item["country-code"] || "").toUpperCase();
+        if (countryCode === "FIFA" || countryCode === "CH") {
+          detectedSport = "Fútbol";
+        } else {
+          detectedSport = "Deportes";
+        }
+      }
+
+      const cleanId = item.id || item.event_id || item["ofutbol-link"]?.split("/").pop() || `ev-${idx}`;
+
+      return {
+        id: cleanId,
+        title: item.title || item.name || item.titulo || "Evento Deportivo",
+        tournament: item.tournament || item.league || item.torneo || item.type || "Programación",
+        time: extractedTime || "Por Definir",
+        status: item.status || item.estado || (players ? "LIVE" : "PROGRAMADO"),
+        sport: detectedSport,
+        channels: channelsList,
+        stream_url: defaultStream,
+        players: players || undefined,
+        image: item.photo || item.image || item.banner || undefined,
+        views: typeof item["ofutbol-view"] === "number" ? item["ofutbol-view"] : (item.views ? Number(item.views) : undefined)
+      };
+    };
+
     // 2. Parse Events (matches, sports programs)
     let parsedEvents: LiveEvent[] = [];
-    const rawEvents = apiData.events || apiData.eventos || apiData.schedule || apiData.shedule || apiData.agenda || [];
-    if (Array.isArray(rawEvents)) {
-      parsedEvents = rawEvents.map((ev: any, idx: number) => {
-        // Extraer hora si está disponible en la descripción
-        let extractedTime = ev.time || ev.hora || "";
-        if (!extractedTime && ev.description) {
-          const match = ev.description.match(/a las\s+(\d{1,2}:\d{2})/i);
-          if (match) {
-            extractedTime = match[1];
-          }
-        }
-        
-        // Estructura de players (si play tiene player-1, player-2, etc.)
-        const players = ev.play || ev.players || null;
-        const defaultStream = ev.stream_url || ev.stream || ev.url || (players ? players["player-1"] || players["player-2"] : "");
-
-        return {
-          id: ev.id || ev.event_id || `ev-${idx}`,
-          title: ev.title || ev.name || ev.titulo || "Evento Deportivo",
-          tournament: ev.tournament || ev.league || ev.torneo || ev.type || "",
-          time: extractedTime || "Por Definir",
-          status: ev.status || ev.estado || (players ? "LIVE" : "PROGRAMADO"),
-          sport: ev.sport || ev.deporte || "Fútbol",
-          channels: Array.isArray(ev.channels) ? ev.channels : (ev.channels ? [ev.channels] : []),
-          stream_url: defaultStream,
-          players: players
-        };
-      });
+    if (Array.isArray(apiData)) {
+      console.log("Detectado formato de API plano (Array). Autodirigiendo elementos...");
+      parsedEvents = apiData.map((ev: any, idx: number) => parseEventItem(ev, idx));
+    } else {
+      const rawEvents = apiData.events || apiData.eventos || apiData.schedule || apiData.shedule || apiData.agenda || [];
+      if (Array.isArray(rawEvents)) {
+        parsedEvents = rawEvents.map((ev: any, idx: number) => parseEventItem(ev, idx));
+      }
     }
 
     // 3. Parse Movies and Series
     let parsedMedia: MediaItem[] = [];
     
-    // Extract Movies
+    // Extract Movies if nested inside object
     const rawMovies = apiData.movies || apiData.peliculas || apiData.films || [];
     if (Array.isArray(rawMovies)) {
       parsedMedia.push(...rawMovies.map((m: any, idx: number) => ({
@@ -188,7 +216,7 @@ export default function App() {
       })));
     }
 
-    // Extract Series
+    // Extract Series if nested inside object
     const rawSeries = apiData.series || apiData.shows || [];
     if (Array.isArray(rawSeries)) {
       parsedMedia.push(...rawSeries.map((s: any, idx: number) => ({
@@ -203,21 +231,6 @@ export default function App() {
         type: "series" as const,
         stream_url: s.stream_url || s.url || ""
       })));
-    }
-
-    // If the API returned a flat array as response directly, try to map it intelligently
-    if (Array.isArray(apiData)) {
-      console.log("Detectado formato de API plano (Array). Autodirigiendo elementos...");
-      parsedEvents = apiData.map((item: any, idx: number) => ({
-        id: item.id || `flat-ev-${idx}`,
-        title: item.title || item.name || item.titulo || "Evento en Vivo",
-        tournament: item.tournament || item.league || "Programación",
-        time: item.time || item.hora || "",
-        status: item.status || "LIVE",
-        sport: item.sport || item.deporte || "General",
-        channels: item.channels ? (Array.isArray(item.channels) ? item.channels : [item.channels]) : [],
-        stream_url: item.stream_url || item.url || item.stream || ""
-      }));
     }
 
     setChannels(parsedChannels);
